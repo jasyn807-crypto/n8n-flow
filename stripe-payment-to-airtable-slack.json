@@ -1,0 +1,89 @@
+{
+  "name": "Stripe Payment Logger",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-payment",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Stripe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "placeholder-webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "amount",
+              "name": "amount",
+              "type": "string",
+              "value": "={{ $json.body.data.object.amount / 100 }}"
+            },
+            {
+              "id": "customer",
+              "name": "customer",
+              "type": "string",
+              "value": "={{ $json.body.data.object.billing_details.email || 'unknown' }}"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $json.body.type }}"
+            },
+            {
+              "id": "date",
+              "name": "date",
+              "type": "string",
+              "value": "={{ $json.body.created }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Format Payment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "webhookUri": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+        "content": "=💰 New payment: ${{ $json.amount }} from {{ $json.customer }}",
+        "options": {}
+      },
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        750,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Stripe Webhook": "Format Payment",
+    "Format Payment": "Slack Alert"
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "Log every Stripe payment to a record and ping Slack in real time."
+  }
+}
